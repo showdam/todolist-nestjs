@@ -1,8 +1,9 @@
-// Vercel serverless function - Express 버전
+// 로컬 테스트용 간단한 서버
 const express = require('express');
 const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 // 메모리에 저장할 todos
 let todos = [];
@@ -10,11 +11,11 @@ let idCounter = 1;
 
 // 미들웨어 설정
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static('public'));
 
 // 뷰 엔진 설정
 app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname, '../views'));
+app.set('views', path.join(__dirname, 'views'));
 
 // 메인 페이지
 app.get('/', (req, res) => {
@@ -84,6 +85,12 @@ app.delete('/todos/:id', (req, res) => {
   
   todos.splice(todoIndex, 1);
   res.status(204).send();
+});
+
+// 서버 시작
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log('📝 Todo List App is ready!');
 });
 
 module.exports = app;

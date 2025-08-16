@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/main.js",
-    "dev": "ts-node src/main.ts",
-    "start:dev": "nodemon --exec ts-node src/main.ts",
-    "vercel-build": "npm run build",
+    "build": "echo 'No build needed for Express'",
+    "start": "node test-local.js",
+    "dev": "node test-local.js",
+    "start:dev": "nodemon test-local.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -20,6 +19,7 @@
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@types/node": "^24.3.0",
+    "express": "^5.1.0",
     "hbs": "^4.2.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
