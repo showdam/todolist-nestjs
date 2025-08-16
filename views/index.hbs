@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .todo-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .todo-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .todo-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .todo-list {
+            list-style: none;
+            padding: 0;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+        .todo-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        .todo-content {
+            flex: 1;
+        }
+        .todo-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .todo-description {
+            color: #666;
+            font-size: 14px;
+        }
+        .todo-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .toggle-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toggle-btn:hover {
+            background-color: #218838;
+        }
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Todo List</h1>
+        
+        <div class="todo-form">
+            <input type="text" id="titleInput" class="todo-input" placeholder="할 일을 입력하세요">
+            <input type="text" id="descriptionInput" class="todo-input" placeholder="설명 (선택사항)">
+            <button class="btn btn-primary" onclick="addTodo()">추가</button>
+        </div>
+
+        <ul class="todo-list" id="todoList">
+            <li class="empty-state">할 일이 없습니다. 새로운 할 일을 추가해보세요!</li>
+        </ul>
+    </div>
+
+    <script>
+        let todos = [];
+
+        async function loadTodos() {
+            try {
+                const response = await fetch('/todos');
+                todos = await response.json();
+                renderTodos();
+            } catch (error) {
+                console.error('Failed to load todos:', error);
+            }
+        }
+
+        async function addTodo() {
+            const title = document.getElementById('titleInput').value.trim();
+            const description = document.getElementById('descriptionInput').value.trim();
+
+            if (!title) {
+                alert('제목을 입력해주세요!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, description }),
+                });
+
+                if (response.ok) {
+                    document.getElementById('titleInput').value = '';
+                    document.getElementById('descriptionInput').value = '';
+                    await loadTodos();
+                } else {
+                    alert('할 일 추가에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Failed to add todo:', error);
+                alert('할 일 추가에 실패했습니다.');
+            }
+        }
+
+        async function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+
+            try {
+                const response = await fetch(`/todos/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ completed: !todo.completed }),
+                });
+
+                if (response.ok) {
+                    await loadTodos();
+                } else {
+                    alert('할 일 상태 변경에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Failed to toggle todo:', error);
+                alert('할 일 상태 변경에 실패했습니다.');
+            }
+        }
+
+        async function deleteTodo(id) {
+            if (!confirm('정말로 이 할 일을 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/todos/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    await loadTodos();
+                } else {
+                    alert('할 일 삭제에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Failed to delete todo:', error);
+                alert('할 일 삭제에 실패했습니다.');
+            }
+        }
+
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+
+            if (todos.length === 0) {
+                todoList.innerHTML = '<li class="empty-state">할 일이 없습니다. 새로운 할 일을 추가해보세요!</li>';
+                return;
+            }
+
+            todoList.innerHTML = todos.map(todo => `
+                <li class="todo-item ${todo.completed ? 'completed' : ''}">
+                    <div class="todo-content">
+                        <div class="todo-title">${todo.title}</div>
+                        ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
+                    </div>
+                    <div class="todo-actions">
+                        <button class="toggle-btn" onclick="toggleTodo(${todo.id})">
+                            ${todo.completed ? '되돌리기' : '완료'}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteTodo(${todo.id})">삭제</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Enter 키로 할 일 추가
+        document.getElementById('titleInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        document.getElementById('descriptionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        // 페이지 로드 시 할 일 목록 불러오기
+        loadTodos();
+    </script>
+</body>
+</html>
